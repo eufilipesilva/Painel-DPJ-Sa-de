@@ -7,18 +7,13 @@ import time
 # 1. CONFIGURAÇÃO DA CHAVE E CONEXÃO
 # ==============================================================================
 def configurar_ia():
-    # --- SUA CHAVE ESTÁ AQUI ---
-    MINHA_CHAVE = "AIzaSyDWwJ9L6L2i6AjZup-Gn1Dv7XUiNk_-eGY" 
-    # -------------------------
-    
-    # Removido o bloco "if" que estava atrapalhando.
-    # Agora ele tenta conectar direto.
-
     try:
-        genai.configure(api_key=MINHA_CHAVE)
+        # Busca a chave no cofre de segredos do Streamlit
+        api_key = st.secrets["GOOGLE_API_KEY"]
+        genai.configure(api_key=api_key)
         return True
     except Exception as e:
-        st.error(f"Erro ao conectar no Google: {e}")
+        st.error("❌ Erro: Chave API não configurada nos Secrets.")
         return False
 
 # ==============================================================================
@@ -150,4 +145,5 @@ def exibir_assistente(dados_aluno):
                         st.rerun()
             
             except Exception as e:
+
                 st.error(f"Erro na IA: {e}")
