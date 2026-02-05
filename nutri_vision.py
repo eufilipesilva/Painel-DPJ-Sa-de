@@ -5,7 +5,7 @@ import time
 
 def configurar_ia():
     # --- SUA CHAVE ESTÁ AQUI ---
-    MINHA_CHAVE = "AIzaSyDWwJ9L6L2i6AjZup-Gn1Dv7XUiNk_-eGY" 
+
     # -------------------------
     
     # Removido o bloco "if" que estava atrapalhando.
@@ -19,7 +19,7 @@ def configurar_ia():
         return False
 
 def exibir_nutri_vision(dados_aluno):
-    st.title("📸 Nutri-Vision DPJ TABAJARA versão 0.1 (Powered by Gemini 2.5)")
+    st.title("📸 Nutri-Vision - Analise o seu prato")
     st.markdown("Envie a foto e receba a análise nutricional ultra-rápida.")
 
     if not configurar_ia():
@@ -74,4 +74,5 @@ def exibir_nutri_vision(dados_aluno):
                         st.success("Análise concluída!")
 
                     except Exception as e:
+
                         st.error(f"Erro na análise: {e}")
