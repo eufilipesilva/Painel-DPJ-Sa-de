@@ -95,6 +95,22 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(255, 75, 75, 0.3);
     }
     
+    /* Estilo para o Pódio de Ranking */
+    .ranking-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        border: 2px solid #F1F5F9;
+    }
+    .first-place { border-color: #FFD700; background: linear-gradient(180deg, #FFFDF0 0%, #FFFFFF 100%); }
+    .second-place { border-color: #C0C0C0; }
+    .third-place { border-color: #CD7F32; }
+
+    .medal { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+    .ranking-name { font-weight: 700; color: #1E293B; font-size: 1.2rem; }
+    .ranking-value { color: #3B82F6; font-weight: 800; font-size: 1.5rem; }
+    
     /* Estilização avançada do Toggle Switch (Estilo ON/OFF) */
     div[data-testid="stCheckbox"] {
         background-color: #F1F5F9;
@@ -450,3 +466,4 @@ elif selected == "Nutri-Vision" and st.session_state['logado']:
     if not df_person.empty: nutri_vision.exibir_nutri_vision(ultimo_registro)
 
     else: st.warning("Selecione alguém com dados primeiro.")
+
