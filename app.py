@@ -95,38 +95,31 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(255, 75, 75, 0.3);
     }
     
-    /* Estilo para o Pódio de Ranking */
-    .ranking-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        text-align: center;
-        border: 2px solid #F1F5F9;
+    /* Estilização avançada do Toggle Switch (Estilo ON/OFF) */
+    div[data-testid="stCheckbox"] {
+        background-color: #F1F5F9;
+        padding: 10px 20px;
+        border-radius: 50px;
+        border: 1px solid #E2E8F0;
+        width: fit-content;
     }
-    .first-place { border-color: #FFD700; background: linear-gradient(180deg, #FFFDF0 0%, #FFFFFF 100%); }
-    .second-place { border-color: #C0C0C0; }
-    .third-place { border-color: #CD7F32; }
-
-    .medal { font-size: 2.5rem; display: block; margin-bottom: 10px; }
-    .ranking-name { font-weight: 700; color: #1E293B; font-size: 1.2rem; }
-    .ranking-value { color: #3B82F6; font-weight: 800; font-size: 1.5rem; }
     
-    /* Estilização do Toggle Switch */
-    div[data-testid="stWidgetLabel"] p {
-        font-weight: 600;
-        color: #1E293B;
-    }
-
-    /* Estilo do fundo do switch quando ativo (Cyan/Blue) */
-    input[aria-checked="true"] + div {
+    /* Quando está LIGADO (ON) - Gradiente Azul/Ciano */
+    div[data-testid="stCheckbox"] label[data-checked="true"] div[role="checkbox"] {
         background: linear-gradient(90deg, #00B4DB 0%, #0083B0 100%) !important;
-    }
-
-    /* Estilo do fundo do switch quando inativo (Red/Pink) */
-    input[aria-checked="false"] + div {
-        background: linear-gradient(90deg, #FF512F 0%, #DD2476) !important;
+        border: none !important;
     }
     
+    /* Quando está DESLIGADO (OFF) - Gradiente Vermelho/Rosa */
+    div[data-testid="stCheckbox"] label[data-checked="false"] div[role="checkbox"] {
+        background: linear-gradient(90deg, #FF512F 0%, #DD2476) !important;
+        border: none !important;
+    }
+    
+    /* Deixa a "bolinha" do switch branca e bonita */
+    div[role="checkbox"] > div {
+        background-color: white !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -371,97 +364,79 @@ elif selected == "Ranking":
     st.markdown("# 🏆 Leaderboard do Grupo")
     
     if not df.empty:
-        # --- O BOTÃO TOGGLE ESTILO ON/OFF ---
-        # Centralizado em uma coluna para melhor UX
-        _, col_toggle, _ = st.columns([1, 2, 1])
+        # Centralizando o botão Toggle ON/OFF
+        _, col_toggle, _ = st.columns([1, 1, 1])
         with col_toggle:
-            # O Toggle retorna True (ON) ou False (OFF)
-            modo_30_dias = st.toggle("Modo: Últimos 30 Dias", value=False, help="Ative para ver a evolução recente ou desative para o histórico total.")
-            
-            # Definimos o label do período baseado no estado do botão
+            modo_30_dias = st.toggle("Modo: Últimos 30 Dias", value=False)
             periodo_texto = "Últimos 30 Dias" if modo_30_dias else "Todo o Período"
-            st.info(f"Visualizando: **{periodo_texto}**")
 
         st.divider()
 
-        # --- LÓGICA DE FILTRO ---
+        # Lógica de Filtro Corrigida
         def filtrar_por_periodo(group, trinta_dias):
             group = group.sort_values('Data')
             ultimo = group.iloc[-1]
             if trinta_dias:
                 data_corte = ultimo['Data'] - pd.Timedelta(days=30)
-                # Pega a medição mais próxima de 30 dias atrás
-                primeiro = group[group['Data'] >= data_corte].iloc[0]
+                # Garante que pega a medição mais antiga dentro do período de 30 dias
+                dados_recentes = group[group['Data'] >= data_corte]
+                primeiro = dados_recentes.iloc[0] if not dados_recentes.empty else group.iloc[0]
             else:
                 primeiro = group.iloc[0]
             
             return pd.Series({
                 'Ganho_Musculo': ultimo['Perc_Musc'] - primeiro['Perc_Musc'],
                 'Perda_Gordura': primeiro['Perc_Gordura'] - ultimo['Perc_Gordura'],
-                'Peso_Atual': ultimo['Peso']
+                'Peso_Atual': ultimo['Peso'],
+                'Data_Referencia': primeiro['Data'] # Guardamos para o caption
             })
 
-        # Aplica a lógica com o estado do botão (modo_30_dias)
         ranking_df = df.sort_values('Data').groupby('Pessoa').apply(
             filtrar_por_periodo, trinta_dias=modo_30_dias
         ).reset_index()
 
-        # Exibe um badge informativo sobre o período
-        st.caption(f"📊 Analisando progresso desde: {ranking_df['Data'].min().strftime('%d/%m/%Y')}")
+        # Legenda informativa
+        data_min = ranking_df['Data_Referencia'].min().strftime('%d/%m/%Y')
+        st.caption(f"📊 Comparando dados atuais com a base de: **{data_min}**")
 
-        # --- SEÇÃO 1: PÓDIO DE GANHO DE MÚSCULO ---
+        # --- PÓDIO ---
         st.subheader(f"🔥 Top Evolução: Massa Magra ({periodo_texto})")
-        
-        # Ordenar e pegar o Top 3
         top_musculo = ranking_df.sort_values("Ganho_Musculo", ascending=False).head(3)
         cols = st.columns(3)
         medalhas = ["🥇", "🥈", "🥉"]
-        
+        classes = ["first-place", "second-place", "third-place"] # Classes CSS que definimos antes
+
         for i, (idx, row) in enumerate(top_musculo.iterrows()):
             with cols[i]:
-                # Card colorido baseado no ranking
+                # Card de pódio com cores de metal
                 st.markdown(f"""
-                    <div class="ranking-card">
-                        <span style="font-size: 2rem;">{medalhas[i]}</span>
-                        <div style="font-weight: 700;">{row['Pessoa']}</div>
-                        <div style="color: #3B82F6; font-size: 1.4rem; font-weight: 800;">
-                            +{max(0, row['Ganho_Musculo']):.1f}%
-                        </div>
+                    <div class="ranking-card {classes[i] if i < len(classes) else ''}">
+                        <span class="medal">{medalhas[i]}</span>
+                        <div class="ranking-name">{row['Pessoa']}</div>
+                        <div class="ranking-value">+{max(0, row['Ganho_Musculo']):.1f}%</div>
+                        <div style="color: #64748B; font-size: 0.8rem;">músculo no período</div>
                     </div>
                 """, unsafe_allow_html=True)
-                
+
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # --- SEÇÃO 2: TABELAS LATERAIS ---
+        # --- TABELAS E MAPA ---
         col_g1, col_g2 = st.columns(2)
-        
         with col_g1:
-            st.markdown(f"### 💧 Foco: Queima de Gordura ({periodo_texto})")
-            gordura_rank = ranking_df.sort_values("Perda_Gordura", ascending=False)[['Pessoa', 'Perda_Gordura']]
-            # Formata para exibir sinal de + para perda (que é algo bom)
-            st.dataframe(gordura_rank.rename(columns={'Perda_Gordura': 'Gordura Eliminada (%)'}), 
-                         hide_index=True, use_container_width=True)
+            st.markdown(f"### 💧 Foco: Gordura ({periodo_texto})")
+            gord_df = ranking_df.sort_values("Perda_Gordura", ascending=False)[['Pessoa', 'Perda_Gordura']]
+            st.dataframe(gord_df.rename(columns={'Perda_Gordura': 'Eliminado (%)'}), hide_index=True, use_container_width=True)
 
         with col_g2:
-            st.markdown("### ⚖️ Peso Atual do Grupo")
-            st.dataframe(ranking_df.sort_values("Peso_Atual")[['Pessoa', 'Peso_Atual']], 
-                         hide_index=True, use_container_width=True)
+            st.markdown("### ⚖️ Peso Atual")
+            st.dataframe(ranking_df.sort_values("Peso_Atual")[['Pessoa', 'Peso_Atual']], hide_index=True, use_container_width=True)
 
-        # --- SEÇÃO 3: MAPA DE ESFORÇO ---
         st.divider()
         st.markdown(f"### 🗺️ Mapa de Resultados ({periodo_texto})")
-        fig_mapa = px.scatter(ranking_df, x="Ganho_Musculo", y="Perda_Gordura", 
-                              text="Pessoa", size="Peso_Atual", color="Pessoa",
-                              template="plotly_white")
-        
-        fig_mapa.update_traces(textposition='top center')
-        fig_mapa.add_vline(x=0, line_dash="dash", line_color="#E2E8F0")
-        fig_mapa.add_hline(y=0, line_dash="dash", line_color="#E2E8F0")
-        
+        fig_mapa = px.scatter(ranking_df, x="Ganho_Musculo", y="Perda_Gordura", text="Pessoa", 
+                              size="Peso_Atual", color="Pessoa", template="plotly_white")
+        fig_mapa.update_layout(margin=dict(t=0, b=0))
         st.plotly_chart(fig_mapa, use_container_width=True)
-        
-    else:
-        st.warning("Ainda não há dados cadastrados.")
 
 # --- TELAS RESTRITAS ---
 elif selected == "Dicas" and st.session_state['logado']:
@@ -473,4 +448,5 @@ elif selected == "Assistente IA" and st.session_state['logado']:
 
 elif selected == "Nutri-Vision" and st.session_state['logado']:
     if not df_person.empty: nutri_vision.exibir_nutri_vision(ultimo_registro)
+
     else: st.warning("Selecione alguém com dados primeiro.")
