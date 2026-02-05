@@ -7,3 +7,5 @@ streamlit-lottie
 google-generativeai
 requests
 bcrypt
+FPDF
+
