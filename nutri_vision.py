@@ -12,7 +12,7 @@ def configurar_ia():
     # Agora ele tenta conectar direto.
 
     try:
-        genai.configure(api_key=MINHA_CHAVE)
+        genai.configure(api_key=GOOGLE_API_KEY)
         return True
     except Exception as e:
         st.error(f"Erro ao conectar no Google: {e}")
@@ -76,3 +76,4 @@ def exibir_nutri_vision(dados_aluno):
                     except Exception as e:
 
                         st.error(f"Erro na análise: {e}")
+
