@@ -4,19 +4,15 @@ import PIL.Image
 import time
 
 def configurar_ia():
-    # --- SUA CHAVE ESTÁ AQUI ---
-
-    # -------------------------
-    
-    # Removido o bloco "if" que estava atrapalhando.
-    # Agora ele tenta conectar direto.
-
     try:
-        genai.configure(api_key=GOOGLE_API_KEY)
+        # Busca a chave no cofre de segredos do Streamlit
+        api_key = st.secrets["GOOGLE_API_KEY"]
+        genai.configure(api_key=api_key)
         return True
     except Exception as e:
-        st.error(f"Erro ao conectar no Google: {e}")
+        st.error("❌ Erro: Chave API não configurada nos Secrets.")
         return False
+        
 
 def exibir_nutri_vision(dados_aluno):
     st.title("📸 Nutri-Vision - Analise o seu prato")
@@ -76,4 +72,5 @@ def exibir_nutri_vision(dados_aluno):
                     except Exception as e:
 
                         st.error(f"Erro na análise: {e}")
+
 
