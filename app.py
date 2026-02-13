@@ -461,18 +461,12 @@ elif selected == "Ranking":
         with col_g1:
             st.markdown(f"### 🥓 Foco: Perda de Gordura ({periodo_texto})")
             gord_df = ranking_df.sort_values("Perda_Gordura", ascending=False)[['Pessoa', 'Perda_Gordura']]
-            st.dataframe(gord_df.rename(columns={'Perda_Gordura': 'Eliminado (%)'})
-                         .style.background_gradient(cmap="Greens")
-                         .format("{:.2f}", subset=['Eliminado (%)']), 
-                         hide_index=True, use_container_width=True)
+            st.dataframe(gord_df.rename(columns={'Perda_Gordura': 'Eliminado (%)'}).style.background_gradient(cmap="Greens").format("{:.2f}", subset=['Eliminado (%)']),hide_index=True, use_container_width=True)
 
         with col_g2:
             st.markdown(f"### 💪 Foco: Ganho de Massa Magra ({periodo_texto})")
             massa_df = ranking_df.sort_values("Ganho_Musculo", ascending=False)[['Pessoa', 'Ganho_Musculo']]
-            st.dataframe(massa_df.rename(columns={'Ganho_Musculo': 'Ganho (%)'})
-                         .style.background_gradient(cmap="Greens")
-                         .format("{:.2f}", subset=['Ganho (%)']),
-                          hide_index=True, use_container_width=True)
+            st.dataframe(massa_df.rename(columns={'Ganho_Musculo': 'Ganho (%)'}).style.background_gradient(cmap="Greens").format("{:.2f}", subset=['Ganho (%)']),hide_index=True, use_container_width=True)
         st.divider()
         st.markdown(f"### 🗺️ Mapa de Resultados ({periodo_texto})")
         fig_mapa = px.scatter(ranking_df, x="Ganho_Musculo", y="Perda_Gordura", text="Pessoa", 
