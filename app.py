@@ -407,12 +407,25 @@ elif selected == "Ranking":
             else:
                 primeiro = group.iloc[0]
             
+            d_musculo = (ultimo['Perc_Musc'] - primeiro['Perc_Musc']) / primeiro['Perc_Musc']
+            d_gordura = (ultimo['Perc_Gordura'] - primeiro['Perc_Gordura']) / primeiro['Perc_Gordura']
+            d_visceral = (ultimo['Visceral'] - primeiro['Visceral']) / primeiro['Visceral']
+            d_peso = (ultimo['Peso'] - primeiro['Peso']) / primeiro['Peso']
+            indicador = 100*((d_musculo*0.4)+(d_gordura*-0.3)+(d_visceral*-0.2)+(d_peso*-0.1))
+
             return pd.Series({
                 'Ganho_Musculo': ultimo['Perc_Musc'] - primeiro['Perc_Musc'],
                 'Perda_Gordura': primeiro['Perc_Gordura'] - ultimo['Perc_Gordura'],
                 'Peso_Atual': ultimo['Peso'],
-                'Data_Referencia': primeiro['Data'] # Guardamos para o caption
-            })
+                'Data_Referencia': primeiro['Data'] ,
+                'Delta_Musculo:': d_musculo,
+                'Delta_Gordura:': d_gordura,
+                'Delta_Visceral:': d_visceral,
+                'Delta_Peso:': d_peso,
+                'Indicador': indicador}
+                )
+    
+                             
 
         ranking_df = df.sort_values('Data').groupby('Pessoa').apply(
             filtrar_por_periodo, trinta_dias=modo_30_dias
@@ -423,21 +436,21 @@ elif selected == "Ranking":
         st.caption(f"📊 Comparando dados atuais com a base de: **{data_min}**")
 
         # --- PÓDIO ---
-        st.subheader(f"🔥 Top Evolução: Massa Magra ({periodo_texto})")
-        top_musculo = ranking_df.sort_values("Ganho_Musculo", ascending=False).head(3)
+        st.subheader(f"🔥 Top Evolução do Indicador ({periodo_texto})")
+        top_indicador = ranking_df.sort_values("Indicador", ascending=False).head(3)
         cols = st.columns(3)
         medalhas = ["🥇", "🥈", "🥉"]
         classes = ["first-place", "second-place", "third-place"] # Classes CSS que definimos antes
 
-        for i, (idx, row) in enumerate(top_musculo.iterrows()):
+        for i, (idx, row) in enumerate(top_indicador.iterrows()):
             with cols[i]:
                 # Card de pódio com cores de metal
                 st.markdown(f"""
                     <div class="ranking-card {classes[i] if i < len(classes) else ''}">
                         <span class="medal">{medalhas[i]}</span>
                         <div class="ranking-name">{row['Pessoa']}</div>
-                        <div class="ranking-value">+{max(0, row['Ganho_Musculo']):.1f}%</div>
-                        <div style="color: #64748B; font-size: 0.8rem;">músculo no período</div>
+                        <div class="ranking-value"> {max(0, row['Indicador']):.1f} pontos</div>
+                        <div style="color: #64748B; font-size: 0.8rem;">Evolução no período</div>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -446,14 +459,20 @@ elif selected == "Ranking":
         # --- TABELAS E MAPA ---
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            st.markdown(f"### 💧 Foco: Gordura ({periodo_texto})")
+            st.markdown(f"### 🥓 Foco: Perda de Gordura ({periodo_texto})")
             gord_df = ranking_df.sort_values("Perda_Gordura", ascending=False)[['Pessoa', 'Perda_Gordura']]
-            st.dataframe(gord_df.rename(columns={'Perda_Gordura': 'Eliminado (%)'}), hide_index=True, use_container_width=True)
+            st.dataframe(gord_df.rename(columns={'Perda_Gordura': 'Eliminado (%)'})
+                         .style.background_gradient(cmap="Greens")
+                         .format("{:.2f}", subset=['Eliminado (%)']), 
+                         hide_index=True, use_container_width=True)
 
         with col_g2:
-            st.markdown("### ⚖️ Peso Atual")
-            st.dataframe(ranking_df.sort_values("Peso_Atual")[['Pessoa', 'Peso_Atual']], hide_index=True, use_container_width=True)
-
+            st.markdown(f"### 💪 Foco: Ganho de Massa Magra ({periodo_texto})")
+            massa_df = ranking_df.sort_values("Ganho_Musculo", ascending=False)[['Pessoa', 'Ganho_Musculo']]
+            st.dataframe(massa_df.rename(columns={'Ganho_Musculo': 'Ganho (%)'})
+                         .style.background_gradient(cmap="Greens")
+                         .format("{:.2f}", subset=['Ganho (%)']),
+                          hide_index=True, use_container_width=True)
         st.divider()
         st.markdown(f"### 🗺️ Mapa de Resultados ({periodo_texto})")
         fig_mapa = px.scatter(ranking_df, x="Ganho_Musculo", y="Perda_Gordura", text="Pessoa", 
