@@ -15,6 +15,7 @@ from streamlit_option_menu import option_menu
 import assistente_ia
 import hub_conteudo
 import nutri_vision 
+import regulamento
 
 st.set_page_config(page_title="Health Tracker | DPJ", page_icon="🩺", layout="wide")
 
@@ -119,23 +120,25 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         width: fit-content;
     }
-    
+
     /* Quando está LIGADO (ON) - Gradiente Azul/Ciano */
     div[data-testid="stCheckbox"] label[data-checked="true"] div[role="checkbox"] {
         background: linear-gradient(90deg, #00B4DB 0%, #0083B0 100%) !important;
         border: none !important;
     }
-    
+
     /* Quando está DESLIGADO (OFF) - Gradiente Vermelho/Rosa */
     div[data-testid="stCheckbox"] label[data-checked="false"] div[role="checkbox"] {
         background: linear-gradient(90deg, #FF512F 0%, #DD2476) !important;
         border: none !important;
     }
-    
+
     /* Deixa a "bolinha" do switch branca e bonita */
     div[role="checkbox"] > div {
         background-color: white !important;
     }
+        }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -196,7 +199,11 @@ if 'Data' in df.columns: df['Data'] = pd.to_datetime(df['Data'], errors='coerce'
 # ==============================================================================
 # 4. SISTEMA DE LOGIN (COM POPUP)
 # ==============================================================================
-USUARIOS = {"admin": "123456", "personal": "treino2026"}
+try:
+    USUARIOS = st.secrets["passwords"]
+except:
+    # Fallback apenas para não quebrar se você esquecer de configurar localmente
+    USUARIOS = {"admin": "admin123"}
 
 if 'logado' not in st.session_state: st.session_state['logado'] = False
 if 'usuario_atual' not in st.session_state: st.session_state['usuario_atual'] = ""
@@ -248,17 +255,17 @@ with st.sidebar:
 # ==============================================================================
 
 if st.session_state['logado']:
-    opcoes = ["Individual", "Ranking", "Dicas", "Assistente IA", "Nutri-Vision"]
-    icones = ["person-circle", "trophy-fill", "lightbulb", "robot", "camera-fill"]
+    opcoes = ["Individual", "Ranking", "Dicas", "Assistente IA", "Nutri-Vision","Regulamento"]
+    icones = ["person-circle", "trophy-fill", "lightbulb", "robot", "camera-fill","clipboard"]
 else:
-    opcoes = ["Individual", "Ranking"]
-    icones = ["person-circle", "trophy-fill"]
+    opcoes = ["Individual", "Ranking","Regulamento"]
+    icones = ["person-circle", "trophy-fill","clipboard"]
 
 selected = option_menu(
     menu_title=None,
     options=opcoes, 
     icons=icones, 
-    menu_icon="cast", 
+    menu_icon="cast",
     default_index=0, 
     orientation="horizontal",
     styles={
@@ -453,7 +460,7 @@ elif selected == "Ranking":
                               size="Peso_Atual", color="Pessoa", template="plotly_white")
         fig_mapa.update_layout(margin=dict(t=0, b=0))
         st.plotly_chart(fig_mapa, use_container_width=True)
-
+        
 # --- TELAS RESTRITAS ---
 elif selected == "Dicas" and st.session_state['logado']:
     hub_conteudo.exibir_hub()
@@ -464,6 +471,8 @@ elif selected == "Assistente IA" and st.session_state['logado']:
 
 elif selected == "Nutri-Vision" and st.session_state['logado']:
     if not df_person.empty: nutri_vision.exibir_nutri_vision(ultimo_registro)
-
     else: st.warning("Selecione alguém com dados primeiro.")
 
+elif selected == "Regulamento":
+    if not df_person.empty: regulamento.exibir_regulamento(ultimo_registro)
+    else: st.warning("Selecione alguém com dados primeiro.")
